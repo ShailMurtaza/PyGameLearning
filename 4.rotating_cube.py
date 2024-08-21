@@ -1,5 +1,6 @@
 import pygame
 import math
+from time import time
 
 WIDTH, HEIGHT = 800, 600
 run = True
@@ -106,7 +107,12 @@ def translate_z(points, offset_z):
 f = 1 # Focal Length
 def main():
     global POINTS
+    prev_time = time()
     while run:
+        new_time = time()
+        dt = new_time - prev_time
+        prev_time = new_time
+
         translated_points = translate_z(POINTS, 4)
 
         # Convert all 3D POINTS to 2D
@@ -117,12 +123,12 @@ def main():
         # Draw EDGES of CUBE
         for i in EDGES:
             pygame.draw.line(WIN, COLORS.white, v2d[i[0]], v2d[i[1]])
-        POINTS = rotate_points(POINTS, -1) # Rotate every point by 1 degree after every iteration
+        POINTS = rotate_points(POINTS, -1 * dt * 70) # Rotate every point by 1 degree after every iteration
 
         draw_win()
         events()
 
-        clock.tick(25) # FPS
+        clock.tick(60) # FPS
 
 
 main()
