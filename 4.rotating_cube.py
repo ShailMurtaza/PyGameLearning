@@ -103,7 +103,7 @@ def translate_z(points, offset_z):
     return translated_points
 
 
-f = 0.9 # Focal Length
+f = 1 # Focal Length
 def main():
     global POINTS
     while run:
