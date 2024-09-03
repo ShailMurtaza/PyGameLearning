@@ -2,8 +2,8 @@ x_min = -1
 x_max = +1
 y_min = -1
 y_max = +1
-z_min = 1e-5
-z_max = 20
+near = 1e-5
+far = 20
 
 
 #FNTBLR
@@ -11,27 +11,27 @@ class CODES:
     INSIDE = 0b000000
     TOP = 0b001000
     BOTTOM = 0b000100
-    RIGHT = 0b000010
-    LEFT = 0b000001
+    RIGHT = 0b000001
+    LEFT = 0b000010
     FAR = 0b100000
     NEAR = 0b010000
 
-def compute_outcode(x, y, z):
+def compute_outcode(x, y, z, w):
     code = CODES.INSIDE
     
-    if x < x_min:
+    if x < -w:
         code |= CODES.LEFT
-    elif x > x_max:
+    elif x > w:
         code |= CODES.RIGHT
     
-    if y < y_min:
+    if y < -w:
         code |= CODES.BOTTOM
-    elif y > y_max:
+    elif y > w:
         code |= CODES.TOP
     
-    if z < z_min:
+    if z < -w:
         code |= CODES.NEAR
-    elif z > z_max:
+    elif z > w:
         code |= CODES.FAR
     
     return code
@@ -40,8 +40,8 @@ def cohen_sutherland_clip(P1, P2):
     x1, y1, z1, w1 = P1
     x2, y2, z2, w2 = P2
 
-    outcode_1 = compute_outcode(x1, y1, z1)
-    outcode_2 = compute_outcode(x2, y2, z2)
+    outcode_1 = compute_outcode(x1, y1, z1, w1)
+    outcode_2 = compute_outcode(x2, y2, z2, w2)
 
     while True:
         if outcode_1 == 0 and outcode_2 == 0:
@@ -69,17 +69,17 @@ def cohen_sutherland_clip(P1, P2):
                 x = x_min
                 z = z1 + (z2 - z1) * (x_min - x1) / (x2 - x1)
             elif outcode & CODES.FAR:
-                x = x1 + (x2 - x1) * (z_max - z1) / (z2 - z1)
-                y = y1 + (y2 - y1) * (z_max - z1) / (z2 - z1)
-                z = z_max
+                x = x1 + (x2 - x1) * (far - z1) / (z2 - z1)
+                y = y1 + (y2 - y1) * (far - z1) / (z2 - z1)
+                z = far
             elif outcode & CODES.NEAR:
-                x = x1 + (x2 - x1) * (z_min - z1) / (z2 - z1)
-                y = y1 + (y2 - y1) * (z_min - z1) / (z2 - z1)
-                z = z_min
+                x = x1 + (x2 - x1) * (near - z1) / (z2 - z1)
+                y = y1 + (y2 - y1) * (near - z1) / (z2 - z1)
+                z = near
 
             if outcode == outcode_1:
                 x1, y1, z1 = x, y, z
-                outcode_1 = compute_outcode(x1, y1, z1)
+                outcode_1 = compute_outcode(x1, y1, z1, w1)
             else:
                 x2, y2, z2 = x, y, z
-                outcode_2 = compute_outcode(x2, y2, z2)
+                outcode_2 = compute_outcode(x2, y2, z2, w2)

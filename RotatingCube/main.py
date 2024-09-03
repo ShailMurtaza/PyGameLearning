@@ -3,12 +3,14 @@ import numpy as np
 from clip import cohen_sutherland_clip
 from colors import COLORS
 
-WIDTH, HEIGHT = 800, 600
+WIDTH, HEIGHT = 500, 500
 run = True
 clock = pygame.time.Clock()
 pygame.init()
 WIN = pygame.display.set_mode((WIDTH, HEIGHT))
 
+near = 1e-5
+far = 20
 
 # Points for CUBE
 POINTS = np.array([
@@ -36,23 +38,40 @@ def main():
         new_points = rotate_y(POINTS, angle) # Rotate every point by 1 degree after every iteration
         new_points = translate(new_points, 0, 0, 4) # Translated on z-axis to make object smaller and fit in frustum
 
-        clipped_vertices = []
-        for i in EDGES:
-            P1 = new_points[i[0]]
-            P2 = new_points[i[1]]
-            COLOR = i[2]
-            result = cohen_sutherland_clip(P1, P2)
-            if result != None:
-                clipped_vertices.append((result[0], result[1], COLOR))
+        new_points = projection(new_points, f)
+        # clipped_vertices = []
+        # for i in EDGES:
+        #     P1 = new_points[i[0]]
+        #     P2 = new_points[i[1]]
+        #     COLOR = i[2]
+        #     result = cohen_sutherland_clip(P1, P2)
+        #     if result != None:
+        #         clipped_vertices.append((result[0], result[1], COLOR))
+        # new_points = clipped_vertices
 
 
         # Draw EDGES of CUBE
-        for i in clipped_vertices:
-            P1 = projection(i[0], f)
-            P2 = projection(i[1], f)
+        for i in new_points:
+            P1 = perspective_divide(i[0])
+            P2 = perspective_divide(i[1])
+            P1 = map_to_screen(P1[0], P1[1])
+            P2 = map_to_screen(P2[0], P2[1])
             COLOR = i[2]
             # Draw line from P1 to P2 with '2PX' width
             pygame.draw.line(WIN, COLOR, P1, P2, 2)
+
+        # Draw Edges of Cube without clipping
+        # for i in EDGES:
+        #     P1 = perspective_divide(new_points[i[0]])
+        #     P2 = perspective_divide(new_points[i[1]])
+
+        #     COLOR = i[2]
+        #     # if (P1[0] < 0 or P1[1] < 0 or P1[0] > 1 or P1[1] > 1 or P2[0] < 0 or P2[1] < 0 or P2[0] > 1 or P2[1] > 1):
+        #     #     continue
+        #     P1 = map_to_screen(P1[0], P1[1])
+        #     P2 = map_to_screen(P2[0], P2[1])
+        #     pygame.draw.line(WIN, COLOR, P1, P2, 2)
+
         angle += 1
         draw_win()
         events()
@@ -73,20 +92,24 @@ def events():
         if e.type == pygame.QUIT:
             run = False
 
-# Get list of 3D vertices and return projected 2D list of vertices
-def vertices_2d(vertices, f):
-    vertices_2d_list = []
-    for i in vertices:
-        vertices_2d_list.append(projection(i, f))
-    return vertices_2d_list
+
+def projection(vertices, f):
+    ar = WIDTH/HEIGHT
+    projection_matrix = np.array([
+        [f / (ar), 0, 0, 0],
+        [0, f, 0, 0],
+        [0, 0, -(far + near)/(far-near), 1],
+        [0, 0, -2*far*near/(far-near), 0]
+    ])
+    return vertices @ projection_matrix
 
 
 # Get 3D vertex and return 2D perpective projection
-def projection(vertex, f):
+def perspective_divide(vertex):
     x, y, z, w = vertex
-    x2d = f * x / z
-    y2d = f * y / z
-    return map_to_screen(x2d, y2d)
+    x2d = (f * x / w)
+    y2d = f * y / w
+    return x2d, y2d
 
 
 # Linear interpolation
