@@ -11,17 +11,24 @@ class COLORS:
     orange = (255, 172, 28)
     white = (255, 255, 255)
 
-shape1 = [
-    [-1.0, 1.0, 1.0],
-    [1.0, 1.0, 1.0],
-    [1.0, -1.0, 1.0],
-    [-1.0, -1.0, 1.0],
+POINTS = [
+    [-1.0, 1.0, 4.0],
+    [1.0, 1.0, 4.0],
+    [1.0, -1.0, 4.0],
+    [-1.0, -1.0, 4.0],
 
     [-1.0, 1.0, 2.0],
     [1.0, 1.0, 2.0],
     [1.0, -1.0, 2.0],
     [-1.0, -1.0, 2.0],
 ]
+
+EDGES = (
+    (0, 1, COLORS.white), (1, 2, COLORS.white), (2, 3, COLORS.white), (3, 0, COLORS.white), # Square 1
+    (4, 5, COLORS.white), (5, 6, COLORS.white), (6, 7, COLORS.white), (7, 4, COLORS.white), # Square 2
+    (0, 4, COLORS.white), (1, 5, COLORS.white), (2, 6, COLORS.white), (3, 7, COLORS.white), # Join both Squares
+)
+
 
 
 pygame.init()
@@ -70,18 +77,19 @@ def map_to_screen(x, y):
     screen_y = int((1 - y) / 2 * HEIGHT)
     return (screen_x, screen_y)
 
-f = 0.3
-sign = 0.02
+f = 1
 def main():
-    global run, f, sign
+    global run, f
     while run:
-        v2d = vertices_2d(shape1, f)
+        v2d = vertices_2d(POINTS, f)
+
         draw_points(v2d, COLORS.red)
-        draw_lines(v2d, COLORS.white)
+
+        # Draw EDGES of CUBE
+        for i in EDGES:
+            pygame.draw.line(WIN, i[2], v2d[i[0]], v2d[i[1]], 2)
 
         draw_win()
         events()
-        input()
-        run = False
 
 main()
