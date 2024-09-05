@@ -3,54 +3,75 @@ import numpy as np
 from clip import cohen_sutherland_clip
 from colors import COLORS
 
-WIDTH, HEIGHT = 500, 500
+WIDTH, HEIGHT = 600, 600
 run = True
 clock = pygame.time.Clock()
 pygame.init()
 WIN = pygame.display.set_mode((WIDTH, HEIGHT))
 
+# x_min = -1
+# x_max = +1
+# y_min = -1
+# y_max = +1
 near = 1e-5
-far = 20
+far = 50
 
 # Points for CUBE
-POINTS = np.array([
-    [-1.0, 1.0, 1.0, 1.0],
-    [1.0, 1.0, 1.0, 1.0],
-    [1.0, -1.0, 1.0, 1.0],
-    [-1.0, -1.0, 1.0, 1.0],
-    [-1.0, 1.0, -1.0, 1.0],
-    [1.0, 1.0, -1.0, 1.0],
-    [1.0, -1.0, -1.0, 1.0],
-    [-1.0, -1.0, -1.0, 1.0],
-])
+# POINTS = np.array([
+#     [-1.0, 1.0, 1.0, 1.0],
+#     [1.0, 1.0, 1.0, 1.0],
+#     [1.0, -1.0, 1.0, 1.0],
+#     [-1.0, -1.0, 1.0, 1.0],
+#     [-1.0, 1.0, -1.0, 1.0],
+#     [1.0, 1.0, -1.0, 1.0],
+#     [1.0, -1.0, -1.0, 1.0],
+#     [-1.0, -1.0, -1.0, 1.0],
+# ])
 
+# EDGES = (
+#     (0, 1, COLORS.teal), (1, 2, COLORS.green), (2, 3, COLORS.magenta), (3, 0, COLORS.red), # Square 1
+#     (4, 5, COLORS.cyan), (5, 6, COLORS.blue), (6, 7, COLORS.pink), (7, 4, COLORS.yellow), # Square 2
+#     (0, 4, COLORS.indigo), (1, 5, COLORS.purple), (2, 6, COLORS.orange), (3, 7, COLORS.white), # Join both Squares
+# )
+
+POINTS = np.array([
+    [-3, 1.0, 1.0, 1.0],
+    [3, 1.0, 1.0, 1.0],
+])
 EDGES = (
-    (0, 1, COLORS.teal), (1, 2, COLORS.green), (2, 3, COLORS.magenta), (3, 0, COLORS.red), # Square 1
-    (4, 5, COLORS.cyan), (5, 6, COLORS.blue), (6, 7, COLORS.pink), (7, 4, COLORS.yellow), # Square 2
-    (0, 4, COLORS.indigo), (1, 5, COLORS.purple), (2, 6, COLORS.orange), (3, 7, COLORS.white), # Join both Squares
+    (0, 1, COLORS.red),
 )
 
-
 f = 1 # Focal Length
+x_translation = 0
+y_translation = 0
+z_translation = 4
 def main():
+    global run, x_translation, y_translation, z_translation
     angle = 0
     while run:
-        new_points = rotate_y(POINTS, angle) # Rotate every point by 1 degree after every iteration
-        new_points = translate(new_points, 0, 0, 4) # Translated on z-axis to make object smaller and fit in frustum
+        print("#############")
+        new_points = POINTS
+        # new_points = rotate_y(new_points, angle) # Rotate every point by 1 degree after every iteration
+        new_points = translate(new_points, x_translation, y_translation, z_translation) # Translated on z-axis to make object smaller and fit in frustum
 
         new_points = projection(new_points, f)
-        # clipped_vertices = []
-        # for i in EDGES:
-        #     P1 = new_points[i[0]]
-        #     P2 = new_points[i[1]]
-        #     COLOR = i[2]
-        #     result = cohen_sutherland_clip(P1, P2)
-        #     if result != None:
-        #         clipped_vertices.append((result[0], result[1], COLOR))
-        # new_points = clipped_vertices
+        print(new_points[0])
+        clipped_vertices = []
+        for i in EDGES:
+            P1 = new_points[i[0]]
+            P2 = new_points[i[1]]
+            COLOR = i[2]
+            result = cohen_sutherland_clip(P1, P2)
+            if result != None:
+                clipped_vertices.append((result[0], result[1], COLOR))
+        new_points = clipped_vertices
 
 
         # Draw EDGES of CUBE
+        # print(new_points[0][0])
+        print(POINTS[0][2] + z_translation)
+        print("#############\n")
         for i in new_points:
             P1 = perspective_divide(i[0])
             P2 = perspective_divide(i[1])
@@ -59,18 +80,6 @@ def main():
             COLOR = i[2]
             # Draw line from P1 to P2 with '2PX' width
             pygame.draw.line(WIN, COLOR, P1, P2, 2)
-
-        # Draw Edges of Cube without clipping
-        # for i in EDGES:
-        #     P1 = perspective_divide(new_points[i[0]])
-        #     P2 = perspective_divide(new_points[i[1]])
-
-        #     COLOR = i[2]
-        #     # if (P1[0] < 0 or P1[1] < 0 or P1[0] > 1 or P1[1] > 1 or P2[0] < 0 or P2[1] < 0 or P2[0] > 1 or P2[1] > 1):
-        #     #     continue
-        #     P1 = map_to_screen(P1[0], P1[1])
-        #     P2 = map_to_screen(P2[0], P2[1])
-        #     pygame.draw.line(WIN, COLOR, P1, P2, 2)
 
         angle += 1
         draw_win()
@@ -87,10 +96,24 @@ def draw_win():
 
 # Handle Events
 def events():
-    global run
+    global run, x_translation, y_translation, z_translation
     for e in pygame.event.get():
         if e.type == pygame.QUIT:
             run = False
+        elif e.type == pygame.KEYUP:
+            if e.key == pygame.K_a:
+                x_translation -= 0.5
+            elif e.key == pygame.K_d:
+                x_translation += 0.5
+            elif e.key == pygame.K_w:
+                y_translation += 0.5
+            elif e.key == pygame.K_s:
+                y_translation -= 0.5
+        elif e.type == pygame.MOUSEWHEEL:
+            if e.y == 1:
+                z_translation += 0.5
+            else:
+                z_translation -= 0.5
 
 
 def projection(vertices, f):
@@ -98,8 +121,8 @@ def projection(vertices, f):
     projection_matrix = np.array([
         [f / (ar), 0, 0, 0],
         [0, f, 0, 0],
-        [0, 0, -(far + near)/(far-near), 1],
-        [0, 0, -2*far*near/(far-near), 0]
+        [0, 0, (far+near)/(far-near), 1],
+        [0, 0, 2*far*near/(near-far), 0]
     ])
     return vertices @ projection_matrix
 

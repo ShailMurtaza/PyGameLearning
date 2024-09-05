@@ -1,11 +1,3 @@
-x_min = -1
-x_max = +1
-y_min = -1
-y_max = +1
-near = 1e-5
-far = 20
-
-
 #FNTBLR
 class CODES:
     INSIDE = 0b000000
@@ -17,23 +9,30 @@ class CODES:
     NEAR = 0b010000
 
 def compute_outcode(x, y, z, w):
+    # print("------------------")
     code = CODES.INSIDE
     
     if x < -w:
         code |= CODES.LEFT
+        # print(f"{x, w} Left Out")
     elif x > w:
         code |= CODES.RIGHT
+        # print(f"{x, w} Right Out")
     
     if y < -w:
         code |= CODES.BOTTOM
+        # print(f"{y, w} Bottom Out")
     elif y > w:
         code |= CODES.TOP
+        # print(f"{y, w} Top Out")
     
     if z < -w:
         code |= CODES.NEAR
+        # print(f"{z, w} Near Out")
     elif z > w:
         code |= CODES.FAR
-    
+        # print(f"{z, w}  Far Out")
+    # print("------------------\n")
     return code
 
 def cohen_sutherland_clip(P1, P2):
@@ -49,37 +48,46 @@ def cohen_sutherland_clip(P1, P2):
         elif outcode_1 & outcode_2 != 0:
             return None
         else:
+            # print("CLIPPING")
+            # input("")
             outcode = outcode_1 if outcode_1 != 0 else outcode_2
             x, y, z = 0, 0, 0
 
             if outcode & CODES.TOP:
-                x = x1 + (x2 - x1) * (y_max - y1) / (y2 - y1)
-                y = y_max
-                z = z1 + (z2 - z1) * (y_max - y1) / (y2 - y1)
+                t = (w1 - y1) / (y2 - y1)
+                x = x1 + (x2 - x1) * t
+                y = w1
+                z = z1 + (z2 - z1) * t
             elif outcode & CODES.BOTTOM:
-                x = x1 + (x2 - x1) * (y_min - y1) / (y2 - y1)
-                y = y_min
-                z = z1 + (z2 - z1) * (y_min - y1) / (y2 - y1)
+                t = (-w1 - y1) / (y2 - y1)
+                x = x1 + (x2 - x1) * t
+                y = -w1
+                z = z1 + (z2 - z1) * t
             elif outcode & CODES.RIGHT:
-                y = y1 + (y2 - y1) * (x_max - x1) / (x2 - x1)
-                x = x_max
-                z = z1 + (z2 - z1) * (x_max - x1) / (x2 - x1)
+                t = (w1 - x1) / (x2 - x1)
+                x = w1
+                y = y1 + (y2 - y1) * t
+                z = z1 + (z2 - z1) * t
             elif outcode & CODES.LEFT:
-                y = y1 + (y2 - y1) * (x_min - x1) / (x2 - x1)
-                x = x_min
-                z = z1 + (z2 - z1) * (x_min - x1) / (x2 - x1)
+                t = (-w1 - x1) / (x2 - x1)
+                x = -w1
+                y = y1 + (y2 - y1) * t
+                z = z1 + (z2 - z1) * t
             elif outcode & CODES.FAR:
-                x = x1 + (x2 - x1) * (far - z1) / (z2 - z1)
-                y = y1 + (y2 - y1) * (far - z1) / (z2 - z1)
-                z = far
+                t = (w1 - z1) / (z2 - z1)
+                x = x1 + (x2 - x1) * t
+                y = y1 + (y2 - y1) * t
+                z = w1
             elif outcode & CODES.NEAR:
-                x = x1 + (x2 - x1) * (near - z1) / (z2 - z1)
-                y = y1 + (y2 - y1) * (near - z1) / (z2 - z1)
-                z = near
+                t = (-w1 - z1) / (z2 - z1)
+                x = x1 + (x2 - x1) * t
+                y = y1 + (y2 - y1) * t
+                z = -w1
 
             if outcode == outcode_1:
                 x1, y1, z1 = x, y, z
                 outcode_1 = compute_outcode(x1, y1, z1, w1)
-            else:
+            elif outcode == outcode_2:
                 x2, y2, z2 = x, y, z
                 outcode_2 = compute_outcode(x2, y2, z2, w2)
+
