@@ -9,37 +9,26 @@ clock = pygame.time.Clock()
 pygame.init()
 WIN = pygame.display.set_mode((WIDTH, HEIGHT))
 
-# x_min = -1
-# x_max = +1
-# y_min = -1
-# y_max = +1
+
 near = 1e-5
 far = 50
 
 # Points for CUBE
-# POINTS = np.array([
-#     [-1.0, 1.0, 1.0, 1.0],
-#     [1.0, 1.0, 1.0, 1.0],
-#     [1.0, -1.0, 1.0, 1.0],
-#     [-1.0, -1.0, 1.0, 1.0],
-#     [-1.0, 1.0, -1.0, 1.0],
-#     [1.0, 1.0, -1.0, 1.0],
-#     [1.0, -1.0, -1.0, 1.0],
-#     [-1.0, -1.0, -1.0, 1.0],
-# ])
-
-# EDGES = (
-#     (0, 1, COLORS.teal), (1, 2, COLORS.green), (2, 3, COLORS.magenta), (3, 0, COLORS.red), # Square 1
-#     (4, 5, COLORS.cyan), (5, 6, COLORS.blue), (6, 7, COLORS.pink), (7, 4, COLORS.yellow), # Square 2
-#     (0, 4, COLORS.indigo), (1, 5, COLORS.purple), (2, 6, COLORS.orange), (3, 7, COLORS.white), # Join both Squares
-# )
-
 POINTS = np.array([
-    [-3, 1.0, 1.0, 1.0],
-    [3, 1.0, 1.0, 1.0],
+    [-1.0, 1.0, 1.0, 1.0],
+    [1.0, 1.0, 1.0, 1.0],
+    [1.0, -1.0, 1.0, 1.0],
+    [-1.0, -1.0, 1.0, 1.0],
+    [-1.0, 1.0, -1.0, 1.0],
+    [1.0, 1.0, -1.0, 1.0],
+    [1.0, -1.0, -1.0, 1.0],
+    [-1.0, -1.0, -1.0, 1.0],
 ])
+
 EDGES = (
-    (0, 1, COLORS.red),
+    (0, 1, COLORS.teal), (1, 2, COLORS.green), (2, 3, COLORS.magenta), (3, 0, COLORS.red), # Square 1
+    (4, 5, COLORS.cyan), (5, 6, COLORS.blue), (6, 7, COLORS.pink), (7, 4, COLORS.yellow), # Square 2
+    (0, 4, COLORS.indigo), (1, 5, COLORS.purple), (2, 6, COLORS.orange), (3, 7, COLORS.white), # Join both Squares
 )
 
 f = 1 # Focal Length
@@ -50,13 +39,12 @@ def main():
     global run, x_translation, y_translation, z_translation
     angle = 0
     while run:
-        print("#############")
         new_points = POINTS
-        # new_points = rotate_y(new_points, angle) # Rotate every point by 1 degree after every iteration
+        new_points = rotate_y(new_points, angle) # Rotate every point by 1 degree after every iteration
         new_points = translate(new_points, x_translation, y_translation, z_translation) # Translated on z-axis to make object smaller and fit in frustum
 
         new_points = projection(new_points, f)
-        print(new_points[0])
+
         clipped_vertices = []
         for i in EDGES:
             P1 = new_points[i[0]]
@@ -69,9 +57,6 @@ def main():
 
 
         # Draw EDGES of CUBE
-        # print(new_points[0][0])
-        print(POINTS[0][2] + z_translation)
-        print("#############\n")
         for i in new_points:
             P1 = perspective_divide(i[0])
             P2 = perspective_divide(i[1])
