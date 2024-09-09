@@ -2,8 +2,9 @@ import pygame
 import numpy as np
 from clip import cohen_sutherland_clip
 from colors import COLORS
+from time import time
 
-WIDTH, HEIGHT = 600, 600
+WIDTH, HEIGHT = 900, 600
 run = True
 clock = pygame.time.Clock()
 pygame.init()
@@ -32,16 +33,28 @@ EDGES = (
 )
 
 f = 1 # Focal Length
-x_translation = 0
-y_translation = 0
-z_translation = 4
+
+# Transformations
+TRANSFORMATION = {
+    "angle": 0.0,
+    "x": 0.0,
+    "y": 0.0,
+    "z": 4.0
+}
+
 def main():
-    global run, x_translation, y_translation, z_translation
-    angle = 0
+    global run, TRANSFORMATION
+    prev_time = time()
     while run:
+        # Calculate delta time for consistent transformations across different Frame Rates
+        new_time = time()
+        dt = new_time - prev_time
+        prev_time = new_time
+
         new_points = POINTS
-        new_points = rotate_y(new_points, angle) # Rotate every point by 1 degree after every iteration
-        new_points = translate(new_points, x_translation, y_translation, z_translation) # Translated on z-axis to make object smaller and fit in frustum
+        TRANSFORMATION["angle"] += dt * 70
+        new_points = rotate_y(POINTS, TRANSFORMATION["angle"]) # Rotate every point by 1 degree after every iteration
+        new_points = translate(new_points, TRANSFORMATION["x"], TRANSFORMATION["y"], TRANSFORMATION["z"]) # Translated on z-axis to make object smaller and fit in frustum
 
         new_points = projection(new_points, f)
 
@@ -66,9 +79,8 @@ def main():
             # Draw line from P1 to P2 with '2PX' width
             pygame.draw.line(WIN, COLOR, P1, P2, 2)
 
-        angle += 1
         draw_win()
-        events()
+        events(dt)
 
         clock.tick(60) # FPS
 
@@ -78,27 +90,53 @@ def draw_win():
     pygame.display.update()
     WIN.fill((0, 0, 0))
 
+# If key is pressed or not
+KEYS = {
+    "W": False,
+    "A": False,
+    "S": False,
+    "D": False,
+}
 
 # Handle Events
-def events():
-    global run, x_translation, y_translation, z_translation
+def events(dt):
+    transformation_factor = 5
+    global run, TRANSFORMATION, KEYS
+    if (KEYS["A"]):
+        TRANSFORMATION["x"] -= transformation_factor * dt
+    if (KEYS["D"]):
+        TRANSFORMATION["x"] += transformation_factor * dt
+    if (KEYS["W"]):
+        TRANSFORMATION["y"] += transformation_factor * dt
+    if (KEYS["S"]):
+        TRANSFORMATION["y"] -= transformation_factor * dt
     for e in pygame.event.get():
         if e.type == pygame.QUIT:
             run = False
+        elif e.type == pygame.KEYDOWN:
+            if e.key == pygame.K_a:
+                KEYS["A"] = True
+            elif e.key == pygame.K_d:
+                KEYS["D"] = True
+            elif e.key == pygame.K_w:
+                KEYS["W"] = True
+            elif e.key == pygame.K_s:
+                KEYS["S"] = True
         elif e.type == pygame.KEYUP:
             if e.key == pygame.K_a:
-                x_translation -= 0.5
+                KEYS["A"] = False
             elif e.key == pygame.K_d:
-                x_translation += 0.5
+                KEYS["D"] = False
             elif e.key == pygame.K_w:
-                y_translation += 0.5
+                KEYS["W"] = False
             elif e.key == pygame.K_s:
-                y_translation -= 0.5
+                KEYS["S"] = False
+        
         elif e.type == pygame.MOUSEWHEEL:
             if e.y == 1:
-                z_translation += 0.5
+                TRANSFORMATION["z"] += transformation_factor * dt
             else:
-                z_translation -= 0.5
+                TRANSFORMATION["z"] -= transformation_factor * dt
 
 
 def projection(vertices, f):
