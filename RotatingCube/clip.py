@@ -6,6 +6,9 @@ TOP    = 0b001000  # y > w
 NEAR   = 0b010000  # z < -w
 FAR    = 0b100000  # z > w
 
+near = 0.1
+far = 10
+
 # Function to compute the outcode for a point
 def compute_outcode(x, y, z, w):
     outcode = 0
@@ -33,17 +36,26 @@ def compute_outcode(x, y, z, w):
 def cohen_sutherland_clip(P1, P2):
     x1, y1, z1, w1 = P1
     x2, y2, z2, w2 = P2
+
     # Compute outcodes for both points
     outcode1 = compute_outcode(x1, y1, z1, w1)
     outcode2 = compute_outcode(x2, y2, z2, w2)
-
+    i = 0
     while True:
+        if i == 10:
+            exit()
+        i += 1
+        # print("-----------")
         # Trivial acceptance (both outcodes are zero)
         if outcode1 == 0 and outcode2 == 0:
+            # print("Done Clipping")
+            # print("-----------\n")
             return ((x1, y1, z1, w1), (x2, y2, z2, w2))
         
         # Trivial rejection (logical AND is not zero)
         if (outcode1 & outcode2) != 0:
+            # print("Rejected")
+            # print("-----------\n")
             return None
         
         # Choose one point outside the clipping region
@@ -68,6 +80,7 @@ def cohen_sutherland_clip(P1, P2):
             z =  z1 + t * (z2 - z1)
             w = w1 + t * (w2 - w1)
             x = w
+            # print("Right Clipped: ", x, y, z, w)
 
         elif outcode_out & BOTTOM:  # Clip against bottom plane (y = -w)
             t = (-w1 - y1) / ((y2 - y1) + (w2 - w1))
@@ -96,11 +109,16 @@ def cohen_sutherland_clip(P1, P2):
             y = y1 + t * (y2 - y1)
             w = w1 + t * (w2 - w1)
             z = w
-        
         # Update the point that was outside and recalculate the outcode
         if outcode_out == outcode1:
             x1, y1, z1, w1 = x, y, z, w
+            print("Clipped P1")
+            print(f"({x1}, {y1}, {z1}, {w1}), ({x2}, {y2}, {z2}, {w2})")
+            print("-----------\n")
             outcode1 = compute_outcode(x1, y1, z1, w1)
         else:
             x2, y2, z2, w2 = x, y, z, w
+            print("Clipped P2")
+            print(f"({x1}, {y1}, {z1}, {w1}), ({x2}, {y2}, {z2}, {w2})")
+            print("-----------\n")
             outcode2 = compute_outcode(x2, y2, z2, w2)
