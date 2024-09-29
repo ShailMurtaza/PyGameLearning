@@ -6,56 +6,49 @@ TOP    = 0b001000  # y > w
 NEAR   = 0b010000  # z < -w
 FAR    = 0b100000  # z > w
 
-near = 0.1
-far = 10
+near = 1
+far = 5
 
 # Function to compute the outcode for a point
-def compute_outcode(x, y, z, w):
+def compute_outcode(x, y, z, w, P):
     outcode = 0
     if x < -w:
         outcode |= LEFT
-        # print(f"{x, y, z, w} Left Out")
+        print(f"{x, y, z, w} Left Out {P}")
     elif x > w:
         outcode |= RIGHT
-        # print(f"{x, y, z, w} Right Out")
+        print(f"{x, y, z, w} Right Out {P}")
     if y < -w:
         outcode |= BOTTOM
-        # print(f"{x, y, z, w} Bottom Out")
+        print(f"{x, y, z, w} Bottom Out {P}")
     elif y > w:
         outcode |= TOP
-        # print(f"{x, y, z, w} Top Out")
-    if z < -w:
+        print(f"{x, y, z, w} Top Out {P}")
+    if z < 0:
         outcode |= NEAR
-        # print(f"{x, y, z, w} Near Out")
+        print(f"{x, y, z, w} Near Out {P}")
     elif z > w:
         outcode |= FAR
-        # print(f"{x, y, z, w} Far Out")
+        print(f"{x, y, z, w} Far Out {P}")
     return outcode
 
 # Cohen-Sutherland 3D line clipping algorithm
 def cohen_sutherland_clip(P1, P2):
     x1, y1, z1, w1 = P1
     x2, y2, z2, w2 = P2
+    print(x1, y1, z1, w1)
+    print(x2, y2, z2, w2)
 
     # Compute outcodes for both points
-    outcode1 = compute_outcode(x1, y1, z1, w1)
-    outcode2 = compute_outcode(x2, y2, z2, w2)
-    i = 0
+    outcode1 = compute_outcode(x1, y1, z1, w1, "P1")
+    outcode2 = compute_outcode(x2, y2, z2, w2, "P2")
     while True:
-        if i == 10:
-            exit()
-        i += 1
-        # print("-----------")
         # Trivial acceptance (both outcodes are zero)
         if outcode1 == 0 and outcode2 == 0:
-            # print("Done Clipping")
-            # print("-----------\n")
             return ((x1, y1, z1, w1), (x2, y2, z2, w2))
         
         # Trivial rejection (logical AND is not zero)
         if (outcode1 & outcode2) != 0:
-            # print("Rejected")
-            # print("-----------\n")
             return None
         
         # Choose one point outside the clipping region
@@ -80,7 +73,6 @@ def cohen_sutherland_clip(P1, P2):
             z =  z1 + t * (z2 - z1)
             w = w1 + t * (w2 - w1)
             x = w
-            # print("Right Clipped: ", x, y, z, w)
 
         elif outcode_out & BOTTOM:  # Clip against bottom plane (y = -w)
             t = (-w1 - y1) / ((y2 - y1) + (w2 - w1))
@@ -98,10 +90,10 @@ def cohen_sutherland_clip(P1, P2):
 
         elif outcode_out & NEAR:  # Clip against near plane (z = -w)
             t = (-w1 - z1) / ((z2 - z1) + (w2 - w1))
-            x  =x1 + t * (x2 - x1)
+            x = x1 + t * (x2 - x1)
             y = y1 + t * (y2 - y1)
             w = w1 + t * (w2 - w1)
-            z = -w
+            z = 0
 
         elif outcode_out & FAR:  # Clip against far plane (z = w)
             t = (w1 - z1) / ((z2 - z1) - (w2 - w1))
@@ -112,13 +104,7 @@ def cohen_sutherland_clip(P1, P2):
         # Update the point that was outside and recalculate the outcode
         if outcode_out == outcode1:
             x1, y1, z1, w1 = x, y, z, w
-            print("Clipped P1")
-            print(f"({x1}, {y1}, {z1}, {w1}), ({x2}, {y2}, {z2}, {w2})")
-            print("-----------\n")
-            outcode1 = compute_outcode(x1, y1, z1, w1)
+            outcode1 = compute_outcode(x1, y1, z1, w1, "P1")
         else:
             x2, y2, z2, w2 = x, y, z, w
-            print("Clipped P2")
-            print(f"({x1}, {y1}, {z1}, {w1}), ({x2}, {y2}, {z2}, {w2})")
-            print("-----------\n")
-            outcode2 = compute_outcode(x2, y2, z2, w2)
+            outcode2 = compute_outcode(x2, y2, z2, w2, "P2")
