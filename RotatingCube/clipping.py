@@ -12,19 +12,19 @@ def compute_outcode(x, y, z, w, P):
     if x < -w:
         outcode |= LEFT
         print(f"{P}{x, y, z, w} Left Out")
-    if x > w:
+    elif x > w:
         outcode |= RIGHT
         print(f"{P}{x, y, z, w} Right Out")
     if y < -w:
         outcode |= BOTTOM
         print(f"{P}{x, y, z, w} Bottom Out")
-    if y > w:
+    elif y > w:
         outcode |= TOP
         print(f"{P}{x, y, z, w} Top Out")
-    if z < -w:
+    if z < 0:
         outcode |= NEAR
         print(f"{P}{x, y, z, w} Near Out")
-    if z > w:
+    elif z > w:
         outcode |= FAR
         print(f"{P}{x, y, z, w} Far Out")
     return outcode
@@ -110,12 +110,12 @@ def cohen_sutherland_clip(P1, P2):
             w = w1 + t * (w2 - w1)
             y = w
 
-        elif outcode_out & NEAR:  # Clip against near plane (z = -w)
-            t = z1 / (z1 - z2)
+        elif outcode_out & NEAR:  # Clip against near plane (z = 0)
+            t = -z1 / (z2 - z1)
             x = x1 + t * (x2 - x1)
             y = y1 + t * (y2 - y1)
             w = w1 + t * (w2 - w1)
-            z = -w
+            z = 0
 
         elif outcode_out & FAR:  # Clip against far plane (z = w)
             t = (w1 - z1) / ((z2 - z1) - (w2 - w1))
@@ -141,7 +141,9 @@ def cohen_sutherland_clip(P1, P2):
             outcode2 = compute_outcode(x2, y2, z2, w2, "P2")
 
 P1 = [1.8855625490365544, 2.159434556152527, 1.8855426244586575, 1.8855625490365544]
-P2 = [0.29644864320281183, -1.8363609313964844, -1.5815350850164043, -1.5815150217554024]
+# P2 = [0.29644864320281183, -1.8363609313964844, -1.5815350850164043, -1.5815150217554024]
+# P2 = [0.506, -1.0, -0.9, -0.82]
+P2 = [0.506, -1.0, 0.2, -0.82]
 for i in range(len(P1)):
     P1[i] = round(P1[i], 4)
 for i in range(len(P2)):

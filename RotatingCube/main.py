@@ -12,8 +12,17 @@ pygame.init()
 WIN = pygame.display.set_mode((WIDTH, HEIGHT))
 
 
-near = 1e5
+near = 0.1
 far = 10
+# POINTS, EDGES = parse_obj_to_numpy("cube.obj")
+# (0.7959898283338003, 0.46435786143724656, 0.46433788001116305, 0.46435786143724656)
+
+# Points for CUBE
+# POINTS = np.array([
+#      [0, 1, 1, 1],
+#      [0, -1, 1, 1]
+#  ])
+# EDGES = ((0, 1, COLORS.red),)
 
 POINTS = np.array([
     [-1.0, 1.0, 1.0, 1.0],
@@ -26,21 +35,30 @@ POINTS = np.array([
     [-1.0, -1.0, -1.0, 1.0],
 ])
 
+
 EDGES = (
     (0, 1, COLORS.teal), (1, 2, COLORS.green), (2, 3, COLORS.magenta), (3, 0, COLORS.red), # Square 1
     (4, 5, COLORS.cyan), (5, 6, COLORS.blue), (6, 7, COLORS.pink), (7, 4, COLORS.yellow), # Square 2
     (0, 4, COLORS.indigo), (1, 5, COLORS.purple), (2, 6, COLORS.orange), (3, 7, COLORS.white), # Join both Squares
 )
 
-f = 1/np.tan(90/2) # Focal Length
+#POINTS = np.array([
+##     [1.41399817, 1., 1.22468143, 1.0],
+##     [0.02468143, -1., -0.21399817, 1.0,]
+#    [1.41399817, 1.0, 1.02468143, 1.0],
+#    [0.02468143, 1.0, -0.41399817, 1.0]
+#])
+#EDGES = ((0, 1, COLORS.white),)
 
 # Transformations
 TRANSFORMATION = {
     "angle": 0.0,
     "x": 0.0,
     "y": 0.0,
-    "z": 4
+    "z": 3.0
 }
+
+cam = (0, 0, 0)
 
 def main():
     global run, TRANSFORMATION
@@ -53,15 +71,17 @@ def main():
 
         new_points = POINTS
         TRANSFORMATION["angle"] += 1
-        new_points = rotate_y(POINTS, TRANSFORMATION["angle"]) # Rotate every point by 1 degree after every iteration
+        new_points = rotate_y(new_points, TRANSFORMATION["angle"]) # Rotate every point by 1 degree after every iteration
         new_points = translate(new_points, TRANSFORMATION["x"], TRANSFORMATION["y"], TRANSFORMATION["z"]) # Translated on z-axis to make object smaller and fit in frustum
+        new_points = translate(new_points, -cam[0], -cam[1], -cam[2])
 
-        new_points = projection(new_points, f)
+        new_points = projection(new_points)
 
         clipped_vertices = []
         for i in EDGES:
             P1 = new_points[i[0]]
             P2 = new_points[i[1]]
+            COLOR = "#ffffff"
             COLOR = i[2]
             result = cohen_sutherland_clip(P1, P2)
             if result != None:
@@ -139,7 +159,8 @@ def events(dt):
                 TRANSFORMATION["z"] -= 0.1
 
 
-def projection(vertices, f):
+def projection(vertices):
+    f = 1/np.tan(np.radians(90/2)) # Focal Length
     ar = WIDTH/HEIGHT
     projection_matrix = np.array([
         [f / ar, 0, 0, 0],
@@ -206,5 +227,4 @@ def translate(vertices, tx, ty, tz):
     ])
     return vertices @ translation_matrix
 
-POINTS = rotate_x(POINTS, 180)
 main()
