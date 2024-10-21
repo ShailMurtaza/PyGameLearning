@@ -3,7 +3,7 @@ LEFT   = 0b000001  # x < -w
 RIGHT  = 0b000010  # x > +w
 BOTTOM = 0b000100  # y < -w
 TOP    = 0b001000  # y > +w
-NEAR   = 0b010000  # z < -w
+NEAR   = 0b010000  # z < 0
 FAR    = 0b100000  # z > +w
 
 # Function to compute the outcode for a point
@@ -64,11 +64,28 @@ def cohen_sutherland_clip(P1, P2):
             break
         # Trivial acceptance (both outcodes are zero)
         if outcode1 == 0 and outcode2 == 0:
-            # print("Done Clipping")
+            print("Done Clipping")
             return ((x1, y1, z1, w1), (x2, y2, z2, w2))
         
         # Trivial rejection (logical AND is not zero)
+        if (outcode1 & NEAR):
+            print("NEAR OUTaa P1")
+            t = -z1 / (z2 - z1)
+            x1 = x1 + t * (x2 - x1)
+            y1 = y1 + t * (y2 - y1)
+            w1 = w1 + t * (w2 - w1)
+            z1 = 0
+            outcode1 = compute_outcode(x1, y1, z1, w1, "P1")
+        if (outcode2 & NEAR):
+            print("NEAR OUTaa P2")
+            t = -z1 / (z2 - z1)
+            x2 = x1 + t * (x2 - x1)
+            y2 = y1 + t * (y2 - y1)
+            w2 = w1 + t * (w2 - w1)
+            z2 = 0
+            outcode2 = compute_outcode(x2, y2, z2, w2, "P2")
         if (outcode1 & outcode2) != 0:
+            print("REJECT")
             return None
         
         # Choose one point outside the clipping region
@@ -81,6 +98,12 @@ def cohen_sutherland_clip(P1, P2):
         
         print("-----------")
         # Clip point against the appropriate plane
+        if outcode_out & NEAR:  # Clip against near plane (z = 0)
+            t = -z1 / (z2 - z1)
+            x = x1 + t * (x2 - x1)
+            y = y1 + t * (y2 - y1)
+            w = w1 + t * (w2 - w1)
+            z = 0
         if outcode_out & LEFT:  # Clip against left plane (x = -w)
             t = (-w1 - x1) / ((x2 - x1) + (w2 - w1))
             y = y1 + t * (y2 - y1)
@@ -88,21 +111,21 @@ def cohen_sutherland_clip(P1, P2):
             w = w1 + t * (w2 - w1)
             x = -w
 
-        elif outcode_out & RIGHT:  # Clip against right plane (x = w)
+        if outcode_out & RIGHT:  # Clip against right plane (x = w)
             t = (w1 - x1) / ((x2 - x1) - (w2 - w1))
             y = y1 + t * (y2 - y1)
             z =  z1 + t * (z2 - z1)
             w = w1 + t * (w2 - w1)
             x = w
 
-        elif outcode_out & BOTTOM:  # Clip against bottom plane (y = -w)
+        if outcode_out & BOTTOM:  # Clip against bottom plane (y = -w)
             t = (-w1 - y1) / ((y2 - y1) + (w2 - w1))
             x = x1 + t * (x2 - x1)
             z = z1 + t * (z2 - z1)
             w = w1 + t * (w2 - w1)
             y = -w
 
-        elif outcode_out & TOP:  # Clip against top plane (y = w)
+        if outcode_out & TOP:  # Clip against top plane (y = w)
             t = (w1 - y1) / ((y2 - y1) - (w2 - w1))
             print("CLIPPING FROM TOP t=", t)
             x = x1 + t * (x2 - x1)
@@ -110,14 +133,9 @@ def cohen_sutherland_clip(P1, P2):
             w = w1 + t * (w2 - w1)
             y = w
 
-        elif outcode_out & NEAR:  # Clip against near plane (z = 0)
-            t = -z1 / (z2 - z1)
-            x = x1 + t * (x2 - x1)
-            y = y1 + t * (y2 - y1)
-            w = w1 + t * (w2 - w1)
-            z = 0
 
-        elif outcode_out & FAR:  # Clip against far plane (z = w)
+
+        if outcode_out & FAR:  # Clip against far plane (z = w)
             t = (w1 - z1) / ((z2 - z1) - (w2 - w1))
             x = x1 + t * (x2 - x1)
             y = y1 + t * (y2 - y1)
@@ -140,14 +158,15 @@ def cohen_sutherland_clip(P1, P2):
             print("-----------\n")
             outcode2 = compute_outcode(x2, y2, z2, w2, "P2")
 
-P1 = [1.8855625490365544, 2.159434556152527, 1.8855426244586575, 1.8855625490365544]
+# P1 = [1.8855625490365544, 2.159434556152527, 1.8855426244586575, 1.8855625490365544]
 # P2 = [0.29644864320281183, -1.8363609313964844, -1.5815350850164043, -1.5815150217554024]
 # P2 = [0.506, -1.0, -0.9, -0.82]
-P2 = [0.506, -1.0, 0.2, -0.82]
-for i in range(len(P1)):
-    P1[i] = round(P1[i], 4)
-for i in range(len(P2)):
-    P2[i] = round(P2[i], 4)
+P1 = [1.4142135623730954, -1.0000000000000002, 0.9090909090909072, 0.9999999999999981]
+P2 = [1.4142135621455292e-06, 1.0000000000000002, -0.5194076387607038, -0.4142135623730968]
+# for i in range(len(P1)):
+#     P1[i] = round(P1[i], 4)
+# for i in range(len(P2)):
+#     P2[i] = round(P2[i], 4)
 print(P1)
 print(P2)
 

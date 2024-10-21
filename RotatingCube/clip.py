@@ -7,54 +7,45 @@ NEAR   = 0b010000  # z < -w
 FAR    = 0b100000  # z > w
 
 # Function to compute the outcode for a point
-def compute_outcode(x, y, z, w, P):
+def compute_outcode(x, y, z, w):
     outcode = 0
     if x < -w:
         outcode |= LEFT
-        print(f"{x, y, z, w} Left Out {P}")
     elif x > w:
         outcode |= RIGHT
-        print(f"{x, y, z, w} Right Out {P}")
     if y < -w:
         outcode |= BOTTOM
-        print(f"{x, y, z, w} Bottom Out {P}")
     elif y > w:
         outcode |= TOP
-        print(f"{x, y, z, w} Top Out {P}")
     if z < 0:
         outcode |= NEAR
-        print(f"{x, y, z, w} Near Out {P}")
     elif z > w:
         outcode |= FAR
-        print(f"{x, y, z, w} Far Out {P}")
     return outcode
 
 # Cohen-Sutherland 3D line clipping algorithm
 def cohen_sutherland_clip(P1, P2):
     x1, y1, z1, w1 = P1
     x2, y2, z2, w2 = P2
-    print(x1, y1, z1, w1)
-    print(x2, y2, z2, w2)
 
     # Compute outcodes for both points
-    outcode1 = compute_outcode(x1, y1, z1, w1, "P1")
-    outcode2 = compute_outcode(x2, y2, z2, w2, "P2")
-    i = 0
+    outcode1 = compute_outcode(x1, y1, z1, w1)
+    outcode2 = compute_outcode(x2, y2, z2, w2)
     while True:
-        if i == 10:
-            exit()
-        i += 1
         # Trivial acceptance (both outcodes are zero)
         if outcode1 == 0 and outcode2 == 0:
             return ((x1, y1, z1, w1), (x2, y2, z2, w2))
         
         # Trivial rejection (logical AND is not zero)
         if (outcode1 & outcode2) != 0:
-            # print("REJECTED")
             return None
         
         # Choose one point outside the clipping region
-        if outcode1 != 0:
+        if outcode1 & NEAR:
+            outcode_out = outcode1
+        elif outcode2 & NEAR:
+            outcode_out = outcode2
+        elif outcode1 != 0:
             outcode_out = outcode1
         else:
             outcode_out = outcode2
@@ -106,13 +97,7 @@ def cohen_sutherland_clip(P1, P2):
         # Update the point that was outside and recalculate the outcode
         if outcode_out == outcode1:
             x1, y1, z1, w1 = x, y, z, w
-            # print("Clipped P1")
-            # print(f"({x1}, {y1}, {z1}, {w1}), ({x2}, {y2}, {z2}, {w2})")
-            # print("-----------\n")
-            outcode1 = compute_outcode(x1, y1, z1, w1, "P1")
+            outcode1 = compute_outcode(x1, y1, z1, w1)
         else:
             x2, y2, z2, w2 = x, y, z, w
-            # print("Clipped P2")
-            # print(f"({x1}, {y1}, {z1}, {w1}), ({x2}, {y2}, {z2}, {w2})")
-            # print("-----------\n")
-            outcode2 = compute_outcode(x2, y2, z2, w2, "P2")
+            outcode2 = compute_outcode(x2, y2, z2, w2)
