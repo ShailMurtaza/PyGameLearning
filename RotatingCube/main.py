@@ -1,67 +1,23 @@
 import pygame
+from events import *
+from transformations import *
 import numpy as np
 from clip import cohen_sutherland_clip
-from colors import COLORS
 from time import time
 from obj_loader import parse_obj_to_numpy
 
-WIDTH, HEIGHT = 800, 800
-run = True
 clock = pygame.time.Clock()
 pygame.init()
 WIN = pygame.display.set_mode((WIDTH, HEIGHT))
 
 
-near = 0.1
-far = 10
-# POINTS, EDGES = parse_obj_to_numpy("cube.obj")
-# (0.7959898283338003, 0.46435786143724656, 0.46433788001116305, 0.46435786143724656)
-
-# Points for CUBE
-# POINTS = np.array([
-#      [0, 1, 1, 1],
-#      [0, -1, 1, 1]
-#  ])
-# EDGES = ((0, 1, COLORS.red),)
-
-POINTS = np.array([
-    [-1.0, 1.0, 1.0, 1.0],
-    [1.0, 1.0, 1.0, 1.0],
-    [1.0, -1.0, 1.0, 1.0],
-    [-1.0, -1.0, 1.0, 1.0],
-    [-1.0, 1.0, -1.0, 1.0],
-    [1.0, 1.0, -1.0, 1.0],
-    [1.0, -1.0, -1.0, 1.0],
-    [-1.0, -1.0, -1.0, 1.0],
-])
-
-
-EDGES = (
-    (0, 1, COLORS.teal), (1, 2, COLORS.green), (2, 3, COLORS.magenta), (3, 0, COLORS.red), # Square 1
-    (4, 5, COLORS.cyan), (5, 6, COLORS.blue), (6, 7, COLORS.pink), (7, 4, COLORS.yellow), # Square 2
-    (0, 4, COLORS.indigo), (1, 5, COLORS.purple), (2, 6, COLORS.orange), (3, 7, COLORS.white), # Join both Squares
-)
-
-#POINTS = np.array([
-##     [1.41399817, 1., 1.22468143, 1.0],
-##     [0.02468143, -1., -0.21399817, 1.0,]
-#    [1.41399817, 1.0, 1.02468143, 1.0],
-#    [0.02468143, 1.0, -0.41399817, 1.0]
-#])
-#EDGES = ((0, 1, COLORS.white),)
-
-# Transformations
-TRANSFORMATION = {
-    "angle": 0.0,
-    "x": 0.0,
-    "y": 0.0,
-    "z": 3.0
-}
+POINTS, EDGES = parse_obj_to_numpy("cube.obj")
 
 cam = (0, 0, 0)
 
 def main():
-    global run, TRANSFORMATION
+    run = True
+    global TRANSFORMATION
     prev_time = time()
     while run:
         # Calculate delta time for consistent transformations across different Frame Rates
@@ -77,32 +33,30 @@ def main():
 
         new_points = projection(new_points)
 
-        clipped_vertices = []
         for i in EDGES:
             P1 = new_points[i[0]]
             P2 = new_points[i[1]]
             COLOR = "#ffffff"
-            COLOR = i[2]
             result = cohen_sutherland_clip(P1, P2)
             if result != None:
-                clipped_vertices.append((result[0], result[1], COLOR))
-        new_points = clipped_vertices
+                P1 = result[0]
+                P2 = result[1]
+                draw_point(P1, P2, COLOR)
 
-
-        # Draw EDGES of CUBE
-        for i in new_points:
-            P1 = perspective_divide(i[0])
-            P2 = perspective_divide(i[1])
-            P1 = map_to_screen(P1[0], P1[1])
-            P2 = map_to_screen(P2[0], P2[1])
-            COLOR = i[2]
-            # Draw line from P1 to P2 with '2PX' width
-            pygame.draw.line(WIN, COLOR, P1, P2, 1)
 
         draw_win()
-        events(dt)
+        run = events(dt)
 
         clock.tick(60) # FPS
+
+
+def draw_point(P1, P2, COLOR):
+    P1 = perspective_divide(P1)
+    P2 = perspective_divide(P2)
+    P1 = map_to_screen(P1[0], P1[1])
+    P2 = map_to_screen(P2[0], P2[1])
+    # Draw line from P1 to P2 with '1PX' width
+    pygame.draw.line(WIN, COLOR, P1, P2, 1)
 
 
 # Draw Window
@@ -110,121 +64,5 @@ def draw_win():
     pygame.display.update()
     WIN.fill((0, 0, 0))
 
-# If key is pressed or not
-KEYS = {
-    "W": False,
-    "A": False,
-    "S": False,
-    "D": False,
-}
-
-# Handle Events
-def events(dt):
-    transformation_factor = 5
-    global run, TRANSFORMATION, KEYS
-    if (KEYS["A"]):
-        TRANSFORMATION["x"] -= transformation_factor * dt
-    if (KEYS["D"]):
-        TRANSFORMATION["x"] += transformation_factor * dt
-    if (KEYS["W"]):
-        TRANSFORMATION["y"] += transformation_factor * dt
-    if (KEYS["S"]):
-        TRANSFORMATION["y"] -= transformation_factor * dt
-    for e in pygame.event.get():
-        if e.type == pygame.QUIT:
-            run = False
-        elif e.type == pygame.KEYDOWN:
-            if e.key == pygame.K_a:
-                KEYS["A"] = True
-            elif e.key == pygame.K_d:
-                KEYS["D"] = True
-            elif e.key == pygame.K_w:
-                KEYS["W"] = True
-            elif e.key == pygame.K_s:
-                KEYS["S"] = True
-        elif e.type == pygame.KEYUP:
-            if e.key == pygame.K_a:
-                KEYS["A"] = False
-            elif e.key == pygame.K_d:
-                KEYS["D"] = False
-            elif e.key == pygame.K_w:
-                KEYS["W"] = False
-            elif e.key == pygame.K_s:
-                KEYS["S"] = False
-        
-        elif e.type == pygame.MOUSEWHEEL:
-            if e.y == 1:
-                TRANSFORMATION["z"] += 0.1
-            else:
-                TRANSFORMATION["z"] -= 0.1
-
-
-def projection(vertices):
-    f = 1/np.tan(np.radians(90/2)) # Focal Length
-    ar = WIDTH/HEIGHT
-    projection_matrix = np.array([
-        [f / ar, 0, 0, 0],
-        [0, f, 0, 0],
-        [0, 0, far/(far - near), 1],
-        [0, 0, -far*near/(far - near), 0]
-    ])
-    return vertices @ projection_matrix
-
-
-# Get 3D vertex and return 2D perpective projection
-def perspective_divide(vertex):
-    x, y, z, w = vertex
-    x2d = x / w
-    y2d = y / w
-    return x2d, y2d
-
-
-# Linear interpolation
-# x-axis [-1, 1] to [0, WIDTH]
-# y-axis [1, -1] to [0, HEIGHT]
-def map_to_screen(x, y):
-    screen_x = (x + 1) / 2 * WIDTH
-    screen_y = (1 - y) / 2 * HEIGHT
-    return (screen_x, screen_y)
-
-
-def rotate_x(vertices, angle):
-    angle = np.radians(angle)
-    rotation_matrix = np.array([
-        [1, 0, 0, 0],
-        [0, np.cos(angle), np.sin(angle), 0],
-        [0, -np.sin(angle), np.cos(angle), 0],
-        [0, 0, 0, 1]
-    ])
-    return vertices @ rotation_matrix
-
-def rotate_y(vertices, angle):
-    angle = np.radians(angle)
-    rotation_matrix = np.array([
-        [np.cos(angle), 0, np.sin(angle), 0],
-        [0, 1, 0, 0],
-        [-np.sin(angle), 0, np.cos(angle), 0],
-        [0, 0, 0, 1]
-    ])
-    return vertices @ rotation_matrix
-
-def rotate_z(vertices, angle):
-    angle = np.radians(angle)
-    rotation_matrix = np.array([
-        [np.cos(angle), np.sin(angle), 0, 0],
-        [-np.sin(angle), np.cos(angle), 0, 0],
-        [0, 0, 1, 0],
-        [0, 0, 0, 1]
-    ])
-    return vertices @ rotation_matrix
-
-def translate(vertices, tx, ty, tz):
-    translation_matrix = np.array([
-        [1, 0, 0, 0],
-        [0, 1, 0, 0],
-        [0, 0, 1, 0],
-        [tx, ty, tz, 1]
-    ])
-    return vertices @ translation_matrix
 
 main()
