@@ -70,3 +70,19 @@ def translate(vertices, tx, ty, tz):
         [tx, ty, tz, 1]
     ])
     return vertices @ translation_matrix
+
+
+# Center the object by subtracting arithmetic mean of all coordinate from it
+def center_object(POINTS):
+    center = np.array([0.0, 0.0, 0.0, 0.0])
+    for i in POINTS:
+        center[0] += round(i[0], 2)
+        center[1] += round(i[1], 2)
+        center[2] += round(i[2], 2)
+
+    center[0] = center[0] / len(POINTS)
+    center[1] = center[1] / len(POINTS)
+    center[2] = center[2] / len(POINTS)
+
+    return translate(POINTS, -center[0], -center[1], -center[2])
+
