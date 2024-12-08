@@ -3,7 +3,7 @@ LEFT   = 0b000001  # x < -w
 RIGHT  = 0b000010  # x > w
 BOTTOM = 0b000100  # y < -w
 TOP    = 0b001000  # y > w
-NEAR   = 0b010000  # z < -w
+NEAR   = 0b010000  # z < 0
 FAR    = 0b100000  # z > w
 
 # Function to compute the outcode for a point
