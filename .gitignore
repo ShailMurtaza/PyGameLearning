@@ -1,1 +1,2 @@
-RotatingCube/__pycache__/*
+.gitignore
+*/__pycache__/*
