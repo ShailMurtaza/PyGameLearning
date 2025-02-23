@@ -31,7 +31,7 @@ def main():
         dt = new_time - prev_time
         prev_time = new_time
 
-        new_points = center_object(POINTS)
+        new_points = POINTS
         new_points = rotate_x(new_points, TRANSFORMATION["rotate_x"])
         new_points = rotate_y(new_points, TRANSFORMATION["rotate_y"])
         new_points = rotate_z(new_points, TRANSFORMATION["rotate_z"])
