@@ -1,6 +1,6 @@
 import numpy as np
 
-WIDTH, HEIGHT = 800, 800
+WIDTH, HEIGHT = 800, 500
 near = 0.1
 far = 100
 

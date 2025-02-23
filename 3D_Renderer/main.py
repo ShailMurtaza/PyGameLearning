@@ -1,4 +1,5 @@
 import pygame
+from pygame import freetype
 from events import *
 from transformations import *
 from clip import cohen_sutherland_clip
@@ -8,12 +9,14 @@ from obj_loader import parse_obj_to_numpy
 
 clock = pygame.time.Clock()
 pygame.init()
+FONT = freetype.SysFont(pygame.font.get_default_font(), 20)
 WIN = pygame.display.set_mode((WIDTH, HEIGHT))
 
 
-POINTS, EDGES = parse_obj_to_numpy("cube.obj")
-POINTS, EDGES = parse_obj_to_numpy("sphere.obj")
-POINTS, EDGES = parse_obj_to_numpy("teapot.obj")
+# POINTS, EDGES = parse_obj_to_numpy("cube.obj")
+# POINTS, EDGES = parse_obj_to_numpy("sphere.obj")
+# POINTS, EDGES = parse_obj_to_numpy("teapot.obj")
+POINTS, EDGES = parse_obj_to_numpy("airboat.obj")
 # POINTS, EDGES = parse_obj_to_numpy("13463_Australian_Cattle_Dog_v3.obj")
 
 POINTS = center_object(POINTS)
@@ -46,9 +49,11 @@ def main():
                 P2 = result[1]
                 draw_point(P1, P2, "#ffffff")
 
+        FPS = round(1/dt)
+        text, _ = FONT.render(f"FPS: {FPS}", (200, 0, 0))
+        WIN.blit(text, (10, 5))
         draw_win()
         run = events(dt)
-        print(f"FPS: {round(1/dt):<10}", end="\r")
 
         clock.tick(60) # FPS
 
