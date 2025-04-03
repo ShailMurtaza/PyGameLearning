@@ -10,16 +10,19 @@ from obj_loader import parse_obj_to_numpy
 clock = pygame.time.Clock()
 pygame.init()
 FONT = freetype.SysFont(pygame.font.get_default_font(), 20)
+transformations_font = freetype.SysFont(pygame.font.get_default_font(), 15)
 WIN = pygame.display.set_mode((WIDTH, HEIGHT))
 
 
 POINTS, EDGES = parse_obj_to_numpy("cube.obj")
 # POINTS, EDGES = parse_obj_to_numpy("sphere.obj")
-# POINTS, EDGES = parse_obj_to_numpy("teapot.obj")
+POINTS, EDGES = parse_obj_to_numpy("teapot.obj")
 # POINTS, EDGES = parse_obj_to_numpy("airboat.obj")
 # POINTS, EDGES = parse_obj_to_numpy("13463_Australian_Cattle_Dog_v3.obj")
 
 POINTS = center_object(POINTS)
+# POINTS = rotate_y(POINTS, 90)
+# TRANSFORMATION["rotate_y"] = 90
 cam = (0, 0, 0)
 
 def main():
@@ -52,6 +55,13 @@ def main():
         FPS = round(1/dt)
         text, _ = FONT.render(f"FPS: {FPS}", (200, 0, 0))
         WIN.blit(text, (10, 5))
+
+        text, _ = transformations_font.render("X: " + str(round(TRANSFORMATION["rotate_x"])), (200, 0, 0))
+        WIN.blit(text, (10, 25))
+        text, _ = transformations_font.render("  Y: " + str(round(TRANSFORMATION["rotate_y"])), (200, 0, 0))
+        WIN.blit(text, (60, 25))
+        text, _ = transformations_font.render("   Z: " + str(round(TRANSFORMATION["rotate_z"])), (200, 0, 0))
+        WIN.blit(text, (110, 25))
         draw_win()
         run = events(dt)
 
